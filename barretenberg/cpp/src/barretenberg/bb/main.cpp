@@ -891,7 +891,7 @@ UltraProver_<Flavor> compute_valid_prover(const std::string& bytecodePath,
     auto builder = acir_format::create_circuit<Builder>(program, metadata);
     auto prover = Prover{ builder };
     auto end = std::chrono::high_resolution_clock::now();    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-    std::cout << "Build proving key took " <<  duration.count() << " μs" << std::endl;
+    std::cout << "Build proving key took " << (double)duration.count() / 1000. << " ms" << std::endl;
     init_bn254_crs(prover.proving_key->proving_key.circuit_size);
 
     // output the vk
@@ -926,7 +926,7 @@ void prove_honk(const std::string& bytecodePath,
     auto proof = prover.construct_proof();
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-    std::cout << "Generate proof took " <<  duration.count() << " μs" << std::endl;
+    std::cout << "Generate proof took " <<  (double)duration.count() / 1000. << " ms" << std::endl;
     if (outputPath == "-") {
         writeRawBytesToStdout(to_buffer</*include_size=*/true>(proof));
         vinfo("proof written to stdout");
