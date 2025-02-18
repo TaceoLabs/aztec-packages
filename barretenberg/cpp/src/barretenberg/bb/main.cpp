@@ -37,6 +37,9 @@
 #include "barretenberg/vm2/common/constants.hpp"
 #endif
 
+
+#include <chrono>
+
 using namespace bb;
 
 const std::filesystem::path current_path = std::filesystem::current_path();
@@ -884,13 +887,16 @@ UltraProver_<Flavor> compute_valid_prover(const std::string& bytecodePath,
     // TODO(https://github.com/AztecProtocol/barretenberg/issues/1180): Don't init grumpkin crs when unnecessary.
     init_grumpkin_crs(1 << CONST_ECCVM_LOG_N);
 
+    auto start = std::chrono::high_resolution_clock::now();
     auto builder = acir_format::create_circuit<Builder>(program, metadata);
     auto prover = Prover{ builder };
+    auto end = std::chrono::high_resolution_clock::now();    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    std::cout << "Build proving key took " <<  duration.count() << " μs" << std::endl;
     init_bn254_crs(prover.proving_key->proving_key.circuit_size);
 
     // output the vk
     typename Flavor::VerificationKey vk(prover.proving_key->proving_key);
-    debug(vk.to_field_elements());
+    // debug(vk.to_field_elements());
     return std::move(prover);
 }
 
@@ -915,7 +921,12 @@ void prove_honk(const std::string& bytecodePath,
 
     // Construct Honk proof
     Prover prover = compute_valid_prover<Flavor>(bytecodePath, witnessPath, recursive);
+
+    auto start = std::chrono::high_resolution_clock::now();
     auto proof = prover.construct_proof();
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    std::cout << "Generate proof took " <<  duration.count() << " μs" << std::endl;
     if (outputPath == "-") {
         writeRawBytesToStdout(to_buffer</*include_size=*/true>(proof));
         vinfo("proof written to stdout");
