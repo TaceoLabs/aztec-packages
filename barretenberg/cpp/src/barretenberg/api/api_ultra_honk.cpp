@@ -14,6 +14,8 @@
 #include "barretenberg/plonk_honk_shared/types/aggregation_object_type.hpp"
 #include "barretenberg/srs/global_crs.hpp"
 
+#include <chrono>
+
 namespace bb {
 
 extern std::string CRS_PATH;
@@ -56,7 +58,35 @@ UltraProver_<Flavor> _compute_prover(const std::string& bytecode_path, const std
         init_bn254_crs(1 << 23);
     }
 
-    auto prover = UltraProver_<Flavor>{ _compute_circuit<Flavor>(bytecode_path, witness_path) };
+
+    uint32_t honk_recursion = 0;
+    if constexpr (IsAnyOf<Flavor, UltraFlavor, UltraKeccakFlavor, UltraKeccakZKFlavor>) {
+        honk_recursion = 1;
+    } else if constexpr (IsAnyOf<Flavor, UltraRollupFlavor>) {
+        honk_recursion = 2;
+    }
+#ifdef STARKNET_GARAGA_FLAVORS
+    if constexpr (IsAnyOf<Flavor, UltraStarknetFlavor, UltraStarknetZKFlavor>) {
+        honk_recursion = 1;
+    }
+#endif
+
+    // TODO(https://github.com/AztecProtocol/barretenberg/issues/1180): Don't init grumpkin crs when unnecessary.
+    init_grumpkin_crs(1 << CONST_ECCVM_LOG_N);
+
+    const acir_format::ProgramMetadata metadata{ .honk_recursion = honk_recursion };
+    acir_format::AcirProgram program{ get_constraint_system(bytecode_path) };
+
+    if (!witness_path.empty()) {
+        program.witness = get_witness(witness_path);
+    }
+
+    auto start = std::chrono::high_resolution_clock::now();
+    auto circuit = acir_format::create_circuit<typename Flavor::CircuitBuilder>(program, metadata);
+    auto prover = UltraProver_<Flavor>{ circuit };
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    std::cout << "Build proving key took " << (double)duration.count() / 1000. << " ms" << std::endl;
 
     size_t required_crs_size = prover.proving_key->proving_key.circuit_size;
     if constexpr (Flavor::HasZK) {
@@ -80,7 +110,13 @@ PubInputsProofAndKey<VK> _prove(const bool compute_vk,
                                 const std::filesystem::path& witness_path)
 {
     auto prover = _compute_prover<Flavor>(bytecode_path.string(), witness_path.string());
+
+    auto start = std::chrono::high_resolution_clock::now();
     HonkProof concat_pi_and_proof = prover.construct_proof();
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    std::cout << "Generate proof took " << (double)duration.count() / 1000. << " ms" << std::endl;
+
     size_t num_inner_public_inputs = prover.proving_key->proving_key.num_public_inputs;
     ASSERT(num_inner_public_inputs >= PAIRING_POINT_ACCUMULATOR_SIZE);
     num_inner_public_inputs -= PAIRING_POINT_ACCUMULATOR_SIZE;
