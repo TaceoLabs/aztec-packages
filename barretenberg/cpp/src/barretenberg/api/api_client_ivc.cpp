@@ -8,10 +8,12 @@
 #include "barretenberg/common/map.hpp"
 #include "barretenberg/common/throw_or_abort.hpp"
 #include "barretenberg/common/try_catch_shim.hpp"
+#include "barretenberg/common/serialize.hpp"
 #include "barretenberg/dsl/acir_format/acir_to_constraint_buf.hpp"
 #include "barretenberg/dsl/acir_format/ivc_recursion_constraint.hpp"
 #include "barretenberg/serialize/msgpack.hpp"
 #include "barretenberg/serialize/msgpack_check_eq.hpp"
+#include "barretenberg/serialize/cbind_fwd.hpp"
 #include <algorithm>
 #include <stdexcept>
 
@@ -232,6 +234,100 @@ void ClientIVCAPI::write_vk(const Flags& flags,
         const std::string msg = std::string("Can't write vk for verifier type ") + flags.verifier_type;
         throw_or_abort(msg);
     }
+}
+
+void ClientIVCAPI::export_keys(const std::filesystem::path& input_path,
+                            const std::filesystem::path& output_path_vk,
+                            const std::filesystem::path& output_path_pk)
+
+{
+    PrivateExecutionSteps steps;
+    steps.parse(PrivateExecutionStepRaw::load_and_decompress(input_path));
+
+    // Write all verification keys
+    auto buf = to_buffer(steps.precomputed_vks);
+    write_file(output_path_vk, buf);
+
+    // Write all proving keys
+    std::vector<std::shared_ptr<ClientIVC::DeciderProvingKey>> proving_keys;
+    for (auto [program, precomputed_vk, function_name] :
+         zip_view(steps.folding_stack, steps.precomputed_vks, steps.function_names)) {
+        std::shared_ptr<ClientIVC::DeciderProvingKey> proving_key = get_acir_program_decider_proving_key(program);
+        proving_keys.emplace_back(proving_key);
+
+        // Print easy stuff
+        std::cout << "Circuit size: " << proving_key->proving_key.circuit_size << "\n";
+        std::cout << "Num public inputs: " << proving_key->proving_key.num_public_inputs << "\n";
+        std::cout << "Log circuit size: " << proving_key->proving_key.log_circuit_size << "\n";
+        std::cout << "Pub inputs offset: " << proving_key->proving_key.pub_inputs_offset << "\n";
+
+        // Print first 5 public inputs
+        std::cout << "First 5 public inputs:\n";
+        for (size_t j = 0; j < std::min<size_t>(5, proving_key->proving_key.num_public_inputs); j++) {
+            std::cout << "  " << proving_key->proving_key.public_inputs[j] << "\n";
+        }
+
+        // Print first 5 polynomials and their 5 first coefficients
+        std::cout << "First 5 polynomials and their first 5 coefficients:\n";
+        size_t poly_count = 0;
+        for (const auto& poly : proving_key->proving_key.polynomials.get_precomputed()) {
+            if (poly_count >= 5) {
+                break;
+            }
+            std::cout << "Polynomial " << poly_count << ": ";
+            for (size_t k = 0; k < std::min<size_t>(5, poly.size()); k++) {
+                std::cout << poly[k] << " ";
+            }
+            std::cout << "\n";
+            poly_count++;
+        }
+
+        // Print first 5 memory read records
+        std::cout << "First 5 memory read records:\n";
+        for (size_t j = 0; j < std::min<size_t>(5, proving_key->proving_key.memory_read_records.size()); j++) {
+            std::cout << "  " << proving_key->proving_key.memory_read_records[j] << "\n";
+        }
+
+        // Print first 5 memory write records
+        std::cout << "First 5 memory write records:\n";
+        for (size_t j = 0; j < std::min<size_t>(5, proving_key->proving_key.memory_write_records.size()); j++) {
+            std::cout << "  " << proving_key->proving_key.memory_write_records[j] << "\n";
+        }
+
+                // Print databus_propagation_data
+        std::cout << "Databus Propagation Data:\n";
+        std::cout << "  App return data commitment pub input key start idx: "
+                  << proving_key->proving_key.databus_propagation_data.kernel_return_data_commitment_pub_input_key.start_idx << "\n";
+        std::cout << "  Kernel return data commitment pub input key start idx: "
+                  << proving_key->proving_key.databus_propagation_data.app_return_data_commitment_pub_input_key.start_idx << "\n";
+        std::cout << "  Is kernel: "
+                  << proving_key->proving_key.databus_propagation_data.is_kernel << "\n";
+
+
+        // Print alphas
+        std::cout << "Alphas:\n";
+        for (size_t j = 0; j < proving_key->alphas.size();
+                j++) {
+                std::cout << "  " << proving_key->alphas[j] << "\n";
+                }   
+
+        // Print gate challenges
+        std::cout << "Gate challenges:\n";
+        for (size_t j = 0; j < proving_key->gate_challenges.size(); j++) {
+            std::cout << "  " << proving_key->gate_challenges[j] << "\n";
+        }
+
+
+
+        // Print target sum
+        std::cout << "Target sum: " << proving_key->target_sum << "\n";
+        // Print final active wire index
+        std::cout << "Final active wire index: " << proving_key->final_active_wire_idx << "\n";
+        // Print dyadic circuit size
+    }
+
+    auto buf_pk = to_buffer(proving_keys);
+    write_file(output_path_pk, buf_pk);
 }
 
 bool ClientIVCAPI::check([[maybe_unused]] const Flags& flags,

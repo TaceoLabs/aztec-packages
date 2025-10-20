@@ -8,6 +8,7 @@
 #include "barretenberg/common/log.hpp"
 #include "barretenberg/ext/starknet/stdlib_circuit_builders/ultra_starknet_flavor.hpp"
 #include "barretenberg/ext/starknet/stdlib_circuit_builders/ultra_starknet_zk_flavor.hpp"
+#include "barretenberg/ecc/fields/field_conversion.hpp"
 #include "barretenberg/flavor/flavor.hpp"
 #include "barretenberg/plonk_honk_shared/composer/composer_lib.hpp"
 #include "barretenberg/plonk_honk_shared/composer/permutation_lib.hpp"
@@ -246,6 +247,16 @@ template <IsUltraOrMegaHonk Flavor> class DeciderProvingKey_ {
     ~DeciderProvingKey_() = default;
 
     bool get_is_structured() { return is_structured; }
+
+    MSGPACK_FIELDS(proving_key,
+                    is_accumulator,
+                   alphas,
+                   relation_parameters,
+                   gate_challenges,
+                   target_sum,
+                   final_active_wire_idx,
+                   dyadic_circuit_size,
+                   overflow_size);
 
   private:
     static constexpr size_t num_zero_rows = Flavor::has_zero_row ? 1 : 0;

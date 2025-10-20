@@ -426,6 +426,10 @@ template <typename Fr> class Polynomial {
         return result;
     }
 
+    // The underlying memory, with a bespoke (but minimal) shared array struct that fits our needs.
+    // Namely, it supports polynomial shifts and 'virtual' zeroes past a size up until a 'virtual' size.
+    SharedShiftedVirtualZeroesArray<Fr> coefficients_;
+
   private:
     // allocate a fresh memory pointer for backing memory
     // DOES NOT initialize memory
@@ -433,10 +437,6 @@ template <typename Fr> class Polynomial {
 
     // safety check for in place operations
     bool in_place_operation_viable(size_t domain_size) { return (size() >= domain_size); }
-
-    // The underlying memory, with a bespoke (but minimal) shared array struct that fits our needs.
-    // Namely, it supports polynomial shifts and 'virtual' zeroes past a size up until a 'virtual' size.
-    SharedShiftedVirtualZeroesArray<Fr> coefficients_;
 };
 // NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays)
 template <typename Fr> std::shared_ptr<Fr[]> _allocate_aligned_memory(size_t n_elements)
@@ -550,5 +550,17 @@ template <typename Poly, typename... Polys> auto zip_polys(Poly&& poly, Polys&&.
     // Use fold expression to check all polys exactly match our size
     ASSERT((poly.start_index() == polys.start_index() && poly.end_index() == polys.end_index()) && ...);
     return zip_view(poly.indices(), poly.coeffs(), polys.coeffs()...);
+}
+
+
+template <typename B, typename T> inline void write(B& buf, const Polynomial<T>& poly)
+{
+    using serialize::write;
+    write(buf, poly.virtual_size());
+    std::vector<T> coefficients;
+    for (size_t i = 0; i < poly.virtual_size(); ++i) {
+        coefficients.emplace_back(poly[i]);
+    }
+    write(buf, coefficients);
 }
 } // namespace bb

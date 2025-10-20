@@ -45,12 +45,46 @@
                       _38,                                                                                             \
                       _39,                                                                                             \
                       _40,                                                                                             \
+                      _41,                                                                                             \
+                        _42,                                                                                             \
+                        _43,                                                                                             \
+                        _44,                                                                                             \
+                        _45,                                                                                             \
+                        _46,                                                                                             \
+                        _47,                                                                                             \
+                        _48,                                                                                             \
+                        _49,                                                                                             \
+                        _50,                                                                                             \
+                        _51,                                                                                             \
+                        _52,                                                                                             \
+                        _53,                                                                                             \
+                        _54,                                                                                             \
+                        _55,                                                                                             \
+                        _56,                                                                                             \
+                        _57,                                                                                             \
                       N,                                                                                               \
                       ...)                                                                                             \
     N
 // AD: support for 40 fields!? one may ask. Well, after 30 not being enough...
 #define VA_NARGS(...)                                                                                                  \
     VA_NARGS_IMPL(__VA_ARGS__,                                                                                         \
+                    57,                                                                                                  \
+                    56,                                                                                                  \
+                    55,                                                                                                  \
+                    54,                                                                                                  \
+                    53,                                                                                                  \
+                    52,                                                                                                  \
+                    51,                                                                                                  \
+                    50,                                                                                                  \
+                    49,                                                                                                  \
+                    48,                                                                                                  \
+                    47,                                                                                                  \
+                    46,                                                                                                  \
+                    45,                                                                                                  \
+                    44,                                                                                                  \
+                    43,                                                                                                  \
+                    42,                                                                                                  \
+                    41,                                                                                                  \
                   40,                                                                                                  \
                   39,                                                                                                  \
                   38,                                                                                                  \
@@ -136,6 +170,23 @@
 #define _NVP38(x, ...) _NVP1(x), _NVP37(__VA_ARGS__)
 #define _NVP39(x, ...) _NVP1(x), _NVP38(__VA_ARGS__)
 #define _NVP40(x, ...) _NVP1(x), _NVP39(__VA_ARGS__)
+#define _NVP41(x, ...) _NVP1(x), _NVP40(__VA_ARGS__)
+#define _NVP42(x, ...) _NVP1(x), _NVP41(__VA_ARGS__)
+#define _NVP43(x, ...) _NVP1(x), _NVP42(__VA_ARGS__)
+#define _NVP44(x, ...) _NVP1(x), _NVP43(__VA_ARGS__)
+#define _NVP45(x, ...) _NVP1(x), _NVP44(__VA_ARGS__)
+#define _NVP46(x, ...) _NVP1(x), _NVP45(__VA_ARGS__)
+#define _NVP47(x, ...) _NVP1(x), _NVP46(__VA_ARGS__)
+#define _NVP48(x, ...) _NVP1(x), _NVP47(__VA_ARGS__)
+#define _NVP49(x, ...) _NVP1(x), _NVP48(__VA_ARGS__)
+#define _NVP50(x, ...) _NVP1(x), _NVP49(__VA_ARGS__)
+#define _NVP51(x, ...) _NVP1(x), _NVP50(__VA_ARGS__)
+#define _NVP52(x, ...) _NVP1(x), _NVP51(__VA_ARGS__)
+#define _NVP53(x, ...) _NVP1(x), _NVP52(__VA_ARGS__)
+#define _NVP54(x, ...) _NVP1(x), _NVP53(__VA_ARGS__)
+#define _NVP55(x, ...) _NVP1(x), _NVP54(__VA_ARGS__)
+#define _NVP56(x, ...) _NVP1(x), _NVP55(__VA_ARGS__)
+#define _NVP57(x, ...) _NVP1(x), _NVP56(__VA_ARGS__)
 
 #define CONCAT(a, b) a##b
 #define _NVP_N(n) CONCAT(_NVP, n)

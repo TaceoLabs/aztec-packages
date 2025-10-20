@@ -34,6 +34,12 @@ class ClientIVCAPI : public API {
                   const std::filesystem::path& bytecode_path,
                   const std::filesystem::path& output_path) override;
 
+    // export proving and verification keys for a given circuit
+    void export_keys(
+                     const std::filesystem::path& input_path,
+                     const std::filesystem::path& output_path_vk,
+                      const std::filesystem::path& output_path_pk);
+
     bool check_precomputed_vks(const std::filesystem::path& input_path);
     bool check(const Flags& flags,
                const std::filesystem::path& bytecode_path,

@@ -262,31 +262,6 @@ class MegaFlavor {
         {
             return concatenate(WireEntities<DataType>::get_all(), DerivedEntities<DataType>::get_to_be_shifted());
         }
-
-        MSGPACK_FIELDS(this->w_l,
-                       this->w_r,
-                       this->w_o,
-                       this->w_4,
-                       this->z_perm,
-                       this->lookup_inverses,
-                       this->lookup_read_counts,
-                       this->lookup_read_tags,
-                       this->ecc_op_wire_1,
-                       this->ecc_op_wire_2,
-                       this->ecc_op_wire_3,
-                       this->ecc_op_wire_4,
-                       this->calldata,
-                       this->calldata_read_counts,
-                       this->calldata_read_tags,
-                       this->calldata_inverses,
-                       this->secondary_calldata,
-                       this->secondary_calldata_read_counts,
-                       this->secondary_calldata_read_tags,
-                       this->secondary_calldata_inverses,
-                       this->return_data,
-                       this->return_data_read_counts,
-                       this->return_data_read_tags,
-                       this->return_data_inverses);
     };
 
     /**
@@ -408,6 +383,60 @@ class MegaFlavor {
                 polynomial.increase_virtual_size(size_in);
             }
         }
+
+        MSGPACK_FIELDS(q_m,                  // column 0
+                        q_c,                  // column 1
+                        q_l,                  // column 2
+                        q_r,                  // column 3
+                        q_o,                  // column 4
+                        q_4,                  // column 5
+                        q_busread,            // column 6
+                        q_lookup,             // column 7
+                        q_arith,              // column 8
+                        q_delta_range,        // column 9
+                        q_elliptic,           // column 10
+                        q_aux,                // column 11
+                        q_poseidon2_external, // column 12
+                        q_poseidon2_internal, // column 13
+                        sigma_1,              // column 14
+                        sigma_2,              // column 15
+                        sigma_3,              // column 16
+                        sigma_4,              // column 17
+                        id_1,                 // column 18
+                        id_2,                 // column 19
+                        id_3,                 // column 20
+                        id_4,                 // column 21
+                        table_1,              // column 22
+                        table_2,              // column 23
+                        table_3,              // column 24
+                        table_4,              // column 25
+                        lagrange_first,       // column 26
+                        lagrange_last,        // column 27
+                        lagrange_ecc_op,      // column 28 // indicator poly for ecc op gates
+                        databus_id,            // column 29 // id polynomial, i.e. id_i = i
+                        w_l,
+                        w_r,
+                        w_o,
+                        w_4,
+                        lookup_read_counts,
+                        lookup_read_tags,
+                        ecc_op_wire_1,
+                        ecc_op_wire_2,
+                        ecc_op_wire_3,
+                        ecc_op_wire_4,
+                        calldata,
+                        calldata_read_counts,
+                        calldata_read_tags,
+                        calldata_inverses,
+                        secondary_calldata,
+                        secondary_calldata_read_counts,
+                        secondary_calldata_read_tags,
+                        secondary_calldata_inverses,
+                        return_data,
+                        return_data_read_counts,
+                        return_data_read_tags,
+                        return_data_inverses
+        );
     };
 
     /**
@@ -430,6 +459,18 @@ class MegaFlavor {
 
         // Data pertaining to transfer of databus return data via public inputs
         DatabusPropagationData databus_propagation_data;
+
+        MSGPACK_FIELDS(Base::circuit_size,
+                        // Base::pairing_inputs_public_input_key,
+                        // Base::commitment_key,
+                        Base::num_public_inputs,
+                        Base::log_circuit_size,
+                        Base::pub_inputs_offset,
+                        Base::public_inputs,
+                        polynomials,
+                        memory_read_records,
+                        memory_write_records,
+                        databus_propagation_data);
     };
 
     /**

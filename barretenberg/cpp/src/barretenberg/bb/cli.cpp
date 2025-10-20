@@ -125,6 +125,8 @@ int parse_and_run_cli_command(int argc, char* argv[])
     std::filesystem::path public_inputs_path{ "./target/public_inputs" };
     std::filesystem::path proof_path{ "./target/proof" };
     std::filesystem::path vk_path{ "./target/vk" };
+    std::filesystem::path output_path_vk{ "./vk" };
+    std::filesystem::path output_path_pk{ "./pk" };
     flags.scheme = "";
     flags.oracle_hash_type = "poseidon2";
     flags.output_format = "bytes";
@@ -275,6 +277,20 @@ int parse_and_run_cli_command(int argc, char* argv[])
                                     "Include gates_per_opcode in the output of the gates command.");
     };
 
+    const auto add_output_path_vk_option = [&](CLI::App* subcommand) {
+        return subcommand->add_option(
+            "--output_path_vk",
+            output_path_vk,
+            "Path to write the verification key, e.g. ./target/vk or ./target/vk.msgpack depending on output_format.");
+    };
+
+    const auto add_output_path_pk_option = [&](CLI::App* subcommand) {
+        return subcommand->add_option(
+            "--output_path_pk",
+            output_path_pk,
+            "Path to write the proving key, e.g. ./target/pk or ./target/pk.msgpack depending on output_format.");
+    };
+
     /***************************************************************************************************************
      * Top-level flags
      ***************************************************************************************************************/
@@ -363,6 +379,16 @@ int parse_and_run_cli_command(int argc, char* argv[])
     add_honk_recursion_option(write_vk);
     add_recursive_flag(write_vk);
     add_verifier_type_option(write_vk)->default_val("standalone");
+
+    /***************************************************************************************************************
+     * Subcommand: export_keys
+     ***************************************************************************************************************/
+    CLI::App* export_keys = app.add_subcommand("export_keys", "Export keys used in ClientIVC.");
+
+    add_scheme_option(export_keys);
+    add_output_path_vk_option(export_keys);
+    add_output_path_pk_option(export_keys);
+    add_ivc_inputs_path_options(export_keys);
 
     /***************************************************************************************************************
      * Subcommand: verify
@@ -824,6 +850,14 @@ int parse_and_run_cli_command(int argc, char* argv[])
                         "<ivc-inputs.msgpack> (default ./ivc-inputs.msgpack)");
                 }
                 api.write_ivc_vk(ivc_inputs_path, output_path);
+                return 0;
+            }
+            if (export_keys->parsed()) {
+                if (!std::filesystem::exists(ivc_inputs_path)) {
+                    throw_or_abort("The export_keys command for ClientIVC expect a valid file passed with "
+                                   "--ivc_inputs_path <ivc-inputs.msgpack> (default ./ivc-inputs.msgpack)");
+                }
+                api.export_keys(ivc_inputs_path, output_path_vk, output_path_pk);
                 return 0;
             }
             if (check->parsed()) {
